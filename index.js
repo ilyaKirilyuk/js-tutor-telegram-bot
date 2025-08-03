@@ -24,7 +24,7 @@ bot.on("message", async (msg) => {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo",
     });
 
     const reply = response.choices[0].message.content;
