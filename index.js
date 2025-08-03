@@ -1,6 +1,6 @@
-require("dotenv").config();
-const TelegramBot = require("node-telegram-bot-api");
-const { OpenAI } = require("openai");
+import "dotenv/config";
+import TelegramBot from "node-telegram-bot-api";
+import OpenAI from "openai";
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -12,25 +12,30 @@ const SYSTEM_PROMPT = `
 Используй знания из "You Don’t Know JS", "Eloquent JavaScript", MDN.
 `;
 
-console.log("🤖 JavaScript Tutor Bot is running...");
+console.log("🤖 Бот запущен: JavaScript Tutor");
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userMessage = msg.text;
 
+  // Базовая валидация
+  if (!userMessage || userMessage.length < 2) {
+    return bot.sendMessage(chatId, "✍️ Напиши вопрос или тему по JavaScript.");
+  }
+
   try {
     const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      model: "gpt-3.5-turbo",
     });
 
-    const reply = response.choices[0].message.content;
-    bot.sendMessage(chatId, reply);
-  } catch (err) {
-    console.error("Ошибка OpenAI:", err.message);
+    const reply = response.choices[0]?.message?.content?.trim();
+    bot.sendMessage(chatId, reply || "🤖 Нет ответа. Попробуй снова.");
+  } catch (error) {
+    console.error("❌ Ошибка OpenAI:", error);
     bot.sendMessage(chatId, "⚠️ Произошла ошибка. Попробуй позже.");
   }
 });
