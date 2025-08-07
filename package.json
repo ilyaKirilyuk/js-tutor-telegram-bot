@@ -1,5 +1,5 @@
 {
-  "name": "js-tutor-telegram-bot",
+  "name": "tutor-bot",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -7,8 +7,8 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "dotenv": "^16.3.1",
-    "node-telegram-bot-api": "^0.61.0",
-    "openai": "^4.28.0"
+    "node-telegram-bot-api": "^0.61.0"
   }
 }

@@ -1,41 +1,47 @@
-import "dotenv/config";
-import TelegramBot from "node-telegram-bot-api";
-import OpenAI from "openai";
+import 'dotenv/config';
+import TelegramBot from 'node-telegram-bot-api';
+import axios from 'axios';
 
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `
-Ты — ИИ-наставник по JavaScript, обучающий пользователей на русском языке.
-Объясняй темы по шагам, давай примеры кода, предлагай задания.
-Работай как репетитор: задавай вопросы, предлагай практику, поясняй ошибки.
-Используй знания из "You Don’t Know JS", "Eloquent JavaScript", MDN.
+Ты — ИИ-наставник по Vue.js, обучающий начинающих разработчиков, знакомых с JavaScript.
+Объясняй темы Vue по шагам, с примерами кода и заданиями.
+Работай как преподаватель: давай теорию, задавай вопросы, предлагай практику.
+Используй лучшие практики из официальной документации Vue 3, composition API и современных подходов.
 `;
 
-console.log("🤖 Бот запущен: JavaScript Tutor");
+const MODEL = 'mistralai/mistral-7b-instruct'; // Можно заменить на другую модель (например, "meta-llama/llama-3-8b-instruct")
 
-bot.on("message", async (msg) => {
+bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
-  const userMessage = msg.text;
-
-  // Базовая валидация
-  if (!userMessage || userMessage.length < 2) {
-    return bot.sendMessage(chatId, "✍️ Напиши вопрос или тему по JavaScript.");
-  }
+  const userText = msg.text;
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
-      ],
-    });
+    const response = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: MODEL,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userText }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://yourdomain.com', 
+          'X-Title': 'Vue Tutor Bot'
+        }
+      }
+    );
 
-    const reply = response.choices[0]?.message?.content?.trim();
-    bot.sendMessage(chatId, reply || "🤖 Нет ответа. Попробуй снова.");
-  } catch (error) {
-    console.error("❌ Ошибка OpenAI:", error);
-    bot.sendMessage(chatId, "⚠️ Произошла ошибка. Попробуй позже.");
+    const reply = response.data.choices[0].message.content;
+    bot.sendMessage(chatId, reply);
+  } catch (err) {
+    console.error('Ошибка OpenRouter:', err.response?.data || err.message);
+    bot.sendMessage(chatId, '⚠️ Произошла ошибка. Попробуй позже.');
   }
 });
+
+console.log('🤖 Бот-запущен с OpenRouter');
